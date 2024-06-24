@@ -14,9 +14,30 @@ namespace Practice.Controllers
         private readonly IMapper _mapper = mapper;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<EntryDTO>>> GetEntries()
+        public async Task<ActionResult<IEnumerable<EntryDTO>>> GetEntries(
+            [FromQuery]int? userId = null,
+            [FromQuery]int? taskId = null,
+            [FromQuery]DateOnly? date = null,
+            [FromQuery]DateOnly? month = null)
         {
-            var entries = await _context.Entries.ToListAsync();
+            var query = _context.Entries.AsQueryable();
+
+            if (userId.HasValue)
+                query = query.Where(e => e.UserId == userId.Value);
+            
+            if (taskId.HasValue)
+                query = query.Where(e => e.TaskId == taskId.Value);
+
+            if (date.HasValue)
+                query = query.Where(e => e.Date == date.Value);
+
+            if (month.HasValue)
+                query = query.Where(e => 
+                e.Date.Month == month.Value.Month 
+                && e.Date.Year == month.Value.Year);
+
+            var entries = await query.ToListAsync();
+
             var entriesDTO = _mapper.Map<List<EntryDTO>>(entries);
 
             return Ok(entriesDTO);

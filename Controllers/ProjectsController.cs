@@ -14,16 +14,28 @@ namespace Practice.Controllers
         private readonly IMapper _mapper = mapper;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProjectDTO>>> GetProjects([FromQuery] bool? active = null)
+        public async Task<ActionResult<IEnumerable<ProjectDTO>>> GetProjects(
+            [FromQuery] string? name = null,
+            [FromQuery] bool? active = null)
         {
-            var projects = await _context.Projects.ToListAsync();
+            var query = _context.Projects.AsQueryable();
 
             if (active.HasValue)
-                projects = projects.Where(p => p.IsActive == active.Value).ToList();
+                query = query.Where(p => p.IsActive == active.Value);
+
+            if (name != null)
+            {
+                name = name.ToLower();
+                query = query.Where(p => 
+                p.Name.ToLower()
+                .Contains(name));
+            }
+
+            var projects = await query.ToListAsync();
 
             var projectsDTO = _mapper.Map<List<ProjectDTO>>(projects);
 
-            return projectsDTO;
+            return Ok(projectsDTO);
         }
 
         [HttpGet("{id}", Name = "GetProjectById")]

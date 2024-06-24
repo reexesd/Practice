@@ -14,9 +14,22 @@ namespace Practice.Controllers
         private readonly IMapper _mapper = mapper;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers(
+            [FromQuery] string? search = null)
         {
-            var users = await _context.Users.ToListAsync();
+            var query = _context.Users.AsQueryable();
+
+            if (search != null)
+            {
+                search = search.ToLower();
+                query = query.Where(u => 
+                (u.FirstName + u.MiddleName + u.LastName)
+                .ToLower()
+                .Contains(search));
+            }
+
+            var users = await query.ToListAsync();
+
             var usersDTO = _mapper.Map<List<UserDTO>>(users);
 
             return Ok(usersDTO);

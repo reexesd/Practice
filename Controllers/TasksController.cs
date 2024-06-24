@@ -8,15 +8,35 @@ namespace Practice.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class TasksController(TimeManagementDBContext context, IMapper mapper): ControllerBase
+    public class TasksController(TimeManagementDBContext context, IMapper mapper) : ControllerBase
     {
         private readonly TimeManagementDBContext _context = context;
         private readonly IMapper _mapper = mapper;
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TaskDTO>>> GetTasks()
+        public async Task<ActionResult<IEnumerable<TaskDTO>>> GetTasks(
+            [FromQuery] string? name = null,
+            [FromQuery] int? projectId = null,
+            [FromQuery] bool? active = null)
         {
-            var tasks = await _context.Tasks.ToListAsync();
+            var query = _context.Tasks.AsQueryable();
+
+            if (name != null)
+            {
+                name = name.ToLower();
+                query = query.Where(t => 
+                t.Name.ToLower()
+                .Contains(name));
+            }
+
+            if(projectId.HasValue)
+                query = query.Where(t => t.ProjectId == projectId.Value);
+
+            if(active.HasValue)
+                query = query.Where(t => t.IsActive == active.Value);
+
+            var tasks = await query.ToListAsync();
+
             var tasksDTO = _mapper.Map<List<TaskDTO>>(tasks);
 
             return Ok(tasksDTO);
@@ -55,10 +75,10 @@ namespace Practice.Controllers
             var domainTask = _mapper.Map<Models.Task>(taskDTO);
 
             domainTask.Project = targetProject;
-            
+
             await _context.Tasks.AddAsync(domainTask);
             await _context.SaveChangesAsync();
-            
+
             taskDTO.Id = domainTask.Id;
 
             return CreatedAtRoute("GetTaskById", new { taskDTO.Id }, taskDTO);
