@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization;
 using System.Reflection;
 
 namespace Practice
@@ -34,7 +33,7 @@ namespace Practice
 
         private static void ConfigureServices(IConfiguration config, IServiceCollection services)
         {
-            services.AddControllers().AddJsonOptions(conf => conf.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+            services.AddControllers();
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
             services.AddAutoMapper(Assembly.GetEntryAssembly());
